@@ -21,3 +21,7 @@ Task 2: Create a blog post that walks the user through the steps of using PyTorc
 Requirements:
 
 Feel free to reuse the code from the sample that you prepared with Task 1.
+
+
+raise MisconfigurationException(
+2022-04-29 16:19 pytorch_lightning.utilities.exceptions.MisconfigurationException: GPUAccelerator can not run on your system since the accelerator is not available. The following accelerator(s) is available and can be passed into `accelerator` argument of `Trainer`: ['cpu'].
