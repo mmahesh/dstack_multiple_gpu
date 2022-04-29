@@ -1,0 +1,7 @@
+workflows:
+  - name: train-mnist
+    provider: python
+    requirements: requirements.txt
+    python_script: train.py
+    artifacts:
+      - MNIST
