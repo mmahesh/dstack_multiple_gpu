@@ -68,7 +68,7 @@ args = parser.parse_args()
 
 
 # # training
-trainer = pl.Trainer(accelerator='cpu', gpus=args.gpus, precision=args.precision,
+trainer = pl.Trainer(accelerator='gpu', gpus=args.gpus, precision=args.precision,
                      limit_train_batches=args.limit_train_batches, max_epochs=2)
 trainer.fit(model, train_loader, val_loader)
 
