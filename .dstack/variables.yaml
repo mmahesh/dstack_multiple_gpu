@@ -1,5 +1,5 @@
 variables:
  train-mnist:
-   gpu: 0
+   gpu: 4
    precision: 16
    limit_train_batches: 0.5
