@@ -4,4 +4,4 @@ workflows:
     requirements: requirements.txt
     python_script: train.py
     artifacts:
-      - MNIST
+      - data
