@@ -6,4 +6,4 @@ workflows:
     artifacts:
       - data
     resources:
-      gpu: 8
+      gpu: {{gpu}}
