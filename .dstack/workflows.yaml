@@ -22,4 +22,4 @@ workflows:
     requirements: requirements.txt
     python_script: train2.py
     resources:
-      gpu: ${{ tgpu }}
+      gpu: 2

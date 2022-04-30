@@ -1,6 +1,5 @@
 variables:
  train-mnist:
     gpu: 2
- check-gpu-count:
-    gpu: 2
+
 
