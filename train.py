@@ -62,5 +62,5 @@ model = LitAutoEncoder()
 # 
 # training
 trainer = pl.Trainer(gpus=4, precision=16,
-                     limit_train_batches=0.5, accelerator='ddp', max_epochs=1)
+                     limit_train_batches=0.5, accelerator='dp', max_epochs=1)
 trainer.fit(model, train_loader, val_loader)
