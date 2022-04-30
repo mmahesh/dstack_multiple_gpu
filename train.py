@@ -37,7 +37,8 @@ class LitAutoEncoder(pl.LightningModule):
 		z = self.encoder(x)
 		x_hat = self.decoder(z)
 		loss = F.mse_loss(x_hat, x)
-		self.log('train_loss', loss)
+		# self.log('train_loss', loss)
+		self.log('train_loss', loss, on_step=True, on_epoch=True, sync_dist=True)
 		return loss
 
 	def validation_step(self, val_batch, batch_idx):
@@ -46,7 +47,8 @@ class LitAutoEncoder(pl.LightningModule):
 		z = self.encoder(x)
 		x_hat = self.decoder(z)
 		loss = F.mse_loss(x_hat, x)
-		self.log('val_loss', loss)
+		# self.log('val_loss', loss)
+		self.log('val_loss', loss, on_step=True, on_epoch=True, sync_dist=True)
 
 
 # data
@@ -71,7 +73,7 @@ args = parser.parse_args()
 
 
 # # training
-trainer = pl.Trainer(accelerator='ddp', num_nodes=1, gpus=[0, 1, 2, 3], precision=args.precision,
+trainer = pl.Trainer(accelerator='dp', num_nodes=1, gpus=4, precision=args.precision,
                      limit_train_batches=args.limit_train_batches, max_epochs=2)
 
 st_time =time.time()
