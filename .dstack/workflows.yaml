@@ -19,7 +19,7 @@ workflows:
   
   - name: check-gpu-count
     provider: python
-    requirements: requirements.txt
+    requirements: requirements2.txt
     python_script: train2.py
     resources:
       gpu: 2
