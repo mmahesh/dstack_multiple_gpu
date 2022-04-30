@@ -8,6 +8,7 @@ workflows:
 
   - name: train-mnist
     provider: python
+    python: 3.9
     requirements: requirements.txt
     python_script: train.py
     depends-on:
@@ -22,4 +23,4 @@ workflows:
     requirements: requirements2.txt
     python_script: train2.py
     resources:
-      gpu: 2
+      gpu: 4
