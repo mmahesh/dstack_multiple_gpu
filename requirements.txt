@@ -1,2 +1,4 @@
 torch
 torchvision
+dstack==0.0.4rc8
+pytorch-lightning==1.6.2
