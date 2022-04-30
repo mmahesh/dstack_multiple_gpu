@@ -52,7 +52,7 @@ class LitAutoEncoder(pl.LightningModule):
 
 
 # data
-dataset = MNIST('data', train=True, download=True,
+dataset = MNIST('data', train=True,
                 transform=transforms.ToTensor())
 mnist_train, mnist_val = random_split(dataset, [55000, 5000])
 
