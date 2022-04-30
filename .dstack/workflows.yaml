@@ -16,3 +16,10 @@ workflows:
       - model
     resources:
       gpu: ${{ gpu }}
+  
+  - name: check-gpu-count
+    provider: python
+    requirements: requirements.txt
+    python_script: train2.py
+    resources:
+      gpu: ${{ gpu }}
