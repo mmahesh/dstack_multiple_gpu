@@ -8,6 +8,8 @@ from torchvision.datasets import MNIST
 from torchvision import transforms
 import pytorch_lightning as pl
 import argparse
+import time 
+
 
 class LitAutoEncoder(pl.LightningModule):
 	def __init__(self):
@@ -70,6 +72,9 @@ args = parser.parse_args()
 # # training
 trainer = pl.Trainer(accelerator='gpu', gpus=args.gpus, precision=args.precision,
                      limit_train_batches=args.limit_train_batches, max_epochs=2)
+
+st_time =time.time()
 trainer.fit(model, train_loader, val_loader)
+print(time.time() - st_time)
 
 
