@@ -54,8 +54,9 @@ dataset = MNIST('data', train=True, download=True,
                 transform=transforms.ToTensor())
 mnist_train, mnist_val = random_split(dataset, [55000, 5000])
 
-train_loader = DataLoader(mnist_train, batch_size=32)
-val_loader = DataLoader(mnist_val, batch_size=32)
+train_loader = DataLoader(mnist_train, batch_size=32,
+                          num_workers=8, pin_memory=True)
+val_loader = DataLoader(mnist_val, batch_size=32, num_workers=8, pin_memory=True)
 
 # model
 model = LitAutoEncoder()
@@ -70,7 +71,7 @@ args = parser.parse_args()
 
 
 # # training
-trainer = pl.Trainer(accelerator='horovod', num_nodes=1, gpus=args.gpus, precision=args.precision,
+trainer = pl.Trainer(accelerator='ddp', num_nodes=1, gpus=args.gpus, precision=args.precision,
                      limit_train_batches=args.limit_train_batches, max_epochs=2)
 
 st_time =time.time()
