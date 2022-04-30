@@ -65,15 +65,13 @@ model = LitAutoEncoder()
 
 parser = argparse.ArgumentParser(description='PyTorch Lightning MNIST Example')
 parser.add_argument('--gpus', type=int, default=1)
-parser.add_argument('--precision', type=int, default=16)
-parser.add_argument('--limit_train_batches', type=float, default=0.5)
 
 args = parser.parse_args()
 
 
 
 # # training
-trainer = pl.Trainer(accelerator='dp', num_nodes=1, gpus=4, precision=args.precision,
+trainer = pl.Trainer(accelerator='dp', num_nodes=1, gpus=args.gpus, precision=args.precision,
                      limit_train_batches=args.limit_train_batches, max_epochs=2)
 
 st_time =time.time()
