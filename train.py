@@ -70,7 +70,7 @@ args = parser.parse_args()
 
 
 # # training
-trainer = pl.Trainer(accelerator='ddp', gpus=args.gpus, precision=args.precision,
+trainer = pl.Trainer(accelerator='ddp', num_nodes=4, gpus=args.gpus, precision=args.precision,
                      limit_train_batches=args.limit_train_batches, max_epochs=2)
 
 st_time =time.time()
