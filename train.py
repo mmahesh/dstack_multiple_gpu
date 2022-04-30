@@ -35,7 +35,7 @@ class LitAutoEncoder(pl.LightningModule):
 		z = self.encoder(x)
 		x_hat = self.decoder(z)
 		loss = F.mse_loss(x_hat, x)
-		self.log('train_loss', loss)
+		self.log('train_loss', loss, on_step=True, on_epoch=True, sync_dist=True)
 		return loss
 
 	def validation_step(self, val_batch, batch_idx):
@@ -44,16 +44,16 @@ class LitAutoEncoder(pl.LightningModule):
 		z = self.encoder(x)
 		x_hat = self.decoder(z)
 		loss = F.mse_loss(x_hat, x)
-		self.log('val_loss', loss)
+		self.log('val_loss', loss, on_step=True, on_epoch=True, sync_dist=True)
 
 
 # data
 dataset = MNIST('data', train=True, download=False, transform=transforms.ToTensor())
 mnist_train, mnist_val = random_split(dataset, [55000, 5000])
 
-train_loader = DataLoader(mnist_train, batch_size=32, num_workers=8, pin_memory=True)
+train_loader = DataLoader(mnist_train, batch_size=32, pin_memory=True)
 val_loader = DataLoader(mnist_val, batch_size=32,
-                        num_workers=8, pin_memory=True)
+                         pin_memory=True)
 
 # model
 model = LitAutoEncoder()
