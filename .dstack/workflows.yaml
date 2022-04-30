@@ -2,7 +2,9 @@ workflows:
   - name: download-mnist
     provider: python
     python: 
-      - enum: 3.9
+      - type: string
+      - enum: 
+        - 3.9
     requirements: requirements.txt
     python_script: download.py
     artifacts:
@@ -11,7 +13,9 @@ workflows:
   - name: train-mnist
     provider: python
     python: 
-      - enum: 3.9
+      - type: string
+      - enum: 
+        - 3.9
     requirements: requirements.txt
     python_script: train.py
     depends-on:
