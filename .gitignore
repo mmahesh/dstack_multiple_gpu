@@ -1,1 +1,3 @@
 question.md
+MNIST/*
+lightning_logs/*
