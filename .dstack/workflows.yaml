@@ -1,6 +1,6 @@
 workflows:
   - name: train-mnist
-    provider: python
+    image_name: dstackai/python:3.9-cuda-11.6.0
     requirements: requirements.txt
     python_script: train.py
     artifacts:
