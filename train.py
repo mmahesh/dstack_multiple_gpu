@@ -48,7 +48,7 @@ class LitAutoEncoder(pl.LightningModule):
 
 
 # data
-dataset = MNIST('data', train=True, download=False, transform=transforms.ToTensor())
+dataset = MNIST('data', train=True, download=True, transform=transforms.ToTensor())
 mnist_train, mnist_val = random_split(dataset, [55000, 5000])
 
 train_loader = DataLoader(mnist_train, batch_size=32, pin_memory=True)
