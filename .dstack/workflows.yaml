@@ -3,6 +3,8 @@ workflows:
     provider: download
     artifacts:
       - data
+    resources:
+      gpu: 4
 
   - name: train-mnist
     provider: python
