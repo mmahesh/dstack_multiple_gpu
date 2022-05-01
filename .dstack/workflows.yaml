@@ -1,25 +1,10 @@
 workflows:
-  - name: download-mnist
-    provider: python/3.9
-    python: 3.9
-    requirements: requirements.txt
-    python_script: download.py
-    artifacts:
-      - data
-    
   - name: train-mnist
     provider: python
-    python: "3.9"
+    python: '3.9'
     requirements: requirements.txt
     python_script: train.py
     artifacts:
       - data
     resources:
       gpu: ${{ gpu }}
-  
-  - name: check-gpu-count
-    provider: python
-    requirements: requirements2.txt
-    python_script: train2.py
-    resources:
-      gpu: 4
