@@ -1,7 +1,6 @@
 workflows:
   - name: train-mnist
     provider: python
-    python: '3.9'
     requirements: requirements.txt
     python_script: train.py
     artifacts:

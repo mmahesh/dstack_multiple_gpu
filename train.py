@@ -61,7 +61,7 @@ model = LitAutoEncoder()
 # num_node = 1, gpus=1 for one gpu, gpus=0 for cpu , no need for ddp here
 # 
 # training
-trainer = pl.Trainer(gpus=4, accelerator='dp', limit_train_batches=0.5, max_epochs=1)
+trainer = pl.Trainer(gpus=4, accelerator='gpu', limit_train_batches=0.5, max_epochs=1)
 
 print('starting to fit')
 trainer.fit(model, train_loader, val_loader)
