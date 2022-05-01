@@ -1,6 +1,6 @@
 workflows:
   - name: download-mnist
-    provider: download-mnist
+    provider: download
     artifacts:
       - data
 
