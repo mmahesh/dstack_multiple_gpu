@@ -8,7 +8,8 @@ workflows:
       - data
     
   - name: train-mnist
-    provider: python/3.9
+    provider: python
+    python: "3.9"
     requirements: requirements.txt
     python_script: train.py
     artifacts:
