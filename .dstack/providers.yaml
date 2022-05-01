@@ -1,0 +1,5 @@
+providers:
+  - name: train-mnist
+    image: python:3.9
+    commands:
+      - pip3 install dstack
