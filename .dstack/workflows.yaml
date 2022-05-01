@@ -1,13 +1,13 @@
 workflows:
   - name: download-mnist
-    provider:  download-mnist
+    python: 3.9
     requirements: requirements.txt
     python_script: download.py
     artifacts:
       - data
 
   - name: train-mnist
-    provider: python
+    python: 3.9
     requirements: requirements.txt
     python_script: train.py
     depends-on:
