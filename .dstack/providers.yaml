@@ -1,8 +1,0 @@
-providers:
-  - name: download
-    image: python:3.9
-    commands:
-      - pip3 install dstack
-      - pip3 install -r requirements.txt
-      - python3 download.py
-      - python3 train.py

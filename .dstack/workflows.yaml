@@ -1,6 +1,8 @@
 workflows:
   - name: download-mnist
-    provider: download
+    provider: python
+    requirements: requirements.txt
+    python_script: download.py
     artifacts:
       - data
     
