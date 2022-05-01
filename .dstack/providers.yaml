@@ -1,3 +1,0 @@
-providers:
-    - name: download-mnist
-      image: python:3.9
