@@ -1,9 +1,27 @@
 workflows:
-  - name: train-mnist
-    image_name: dstackai/python:3.9-cuda-11.6.0
+  - name: train-mnist-no-gpu
+    provider: python
     requirements: requirements.txt
     python_script: train.py
     artifacts:
       - data
     resources:
-      gpu: ${{ gpu }}
+      gpu: 0
+
+  - name: train-mnist-one-gpu
+    provider: python
+    requirements: requirements.txt
+    python_script: train.py
+    artifacts:
+      - data
+    resources:
+      gpu: 1
+
+  - name: train-mnist-multi-gpu
+    provider: python
+    requirements: requirements.txt
+    python_script: train.py
+    artifacts:
+      - data
+    resources:
+      gpu: 4

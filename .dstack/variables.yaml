@@ -1,5 +1,0 @@
-variables:
- train-mnist:
-    gpu: 4
-
-

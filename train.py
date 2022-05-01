@@ -7,19 +7,19 @@ from torch.utils.data import random_split
 from torchvision.datasets import MNIST
 from torchvision import transforms
 import pytorch_lightning as pl
-
+import time
 
 class LitAutoEncoder(pl.LightningModule):
 	def __init__(self):
 		super().__init__()
 		self.encoder = nn.Sequential(
-                    nn.Linear(28 * 28, 64),
-                    nn.ReLU(),
-                    nn.Linear(64, 3))
+					nn.Linear(28 * 28, 64),
+					nn.ReLU(),
+					nn.Linear(64, 3))
 		self.decoder = nn.Sequential(
-                    nn.Linear(3, 64),
-                    nn.ReLU(),
-                    nn.Linear(64, 28 * 28))
+					nn.Linear(3, 64),
+					nn.ReLU(),
+					nn.Linear(64, 28 * 28))
 
 	def forward(self, x):
 		embedding = self.encoder(x)
@@ -48,20 +48,47 @@ class LitAutoEncoder(pl.LightningModule):
 
 
 # data
-dataset = MNIST('data', train=True, download=True, transform=transforms.ToTensor())
-mnist_train, mnist_val = random_split(dataset, [55000, 5000])
 
-train_loader = DataLoader(mnist_train, batch_size=32, pin_memory=True)
-val_loader = DataLoader(mnist_val, batch_size=32,
-                         pin_memory=True)
-
-# model
-model = LitAutoEncoder()
 
 # num_node = 1, gpus=1 for one gpu, gpus=0 for cpu , no need for ddp here
 # 
 # training
-trainer = pl.Trainer(gpus=4, accelerator='gpu', limit_train_batches=0.5, max_epochs=1)
 
-print('starting to fit')
-trainer.fit(model, train_loader, val_loader)
+
+def main():
+
+	dataset = MNIST('data', train=True, download=True, transform=transforms.ToTensor())
+	mnist_train, mnist_val = random_split(dataset, [55000, 5000])
+
+	train_loader = DataLoader(mnist_train, batch_size=32, pin_memory=True)
+	val_loader = DataLoader(mnist_val, batch_size=32,
+							pin_memory=True)
+
+	# model
+	model = LitAutoEncoder()
+
+	if torch.cuda.is_available():
+		num_gpus = torch.cuda.device_count()
+	else:
+		num_gpus = 0
+
+	if num_gpus == 0:
+		accelerator_name = 'cpu'
+	elif num_gpus > 0:
+		accelerator_name = 'gpu'
+	else:
+		raise 
+
+	
+
+	trainer = pl.Trainer(gpus=num_gpus, accelerator=accelerator_name,
+						 limit_train_batches=0.5, max_epochs=1)
+
+	print('starting to fit')
+	trainer.fit(model, train_loader, val_loader)
+
+
+if __name__ == '__main__':
+	st_time = time.time()
+	main()
+	print('Time taken is ', time.time()- st_time)
