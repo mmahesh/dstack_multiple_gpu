@@ -74,8 +74,10 @@ def main():
 
 	if num_gpus == 0:
 		accelerator_name = 'cpu'
-	elif num_gpus > 0:
+	elif num_gpus == 1:
 		accelerator_name = 'gpu'
+	elif num_gpus > 1:
+		accelerator_name = 'dp'
 	else:
 		raise 
 

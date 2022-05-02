@@ -6,7 +6,7 @@ workflows:
     artifacts:
       - data
     resources:
-      gpu: 0
+      cpu: 1
 
   - name: train-mnist-one-gpu
     provider: python
