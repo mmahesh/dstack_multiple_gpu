@@ -28,7 +28,7 @@ pip install torch
 pip install torchvision
 ```
 
-# Directory setup
+# Directory Setup
 
 We follow the directory structure below, where our main working directory is `dstack_test`.
 
