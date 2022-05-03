@@ -2,6 +2,8 @@
 
 In this blog, we are going to see how to run your deep learning models on cloud based compute servers via [dstack](https://dstack.ai). The documentation for dstack can be found [here](https://docs.dstack.ai).
 
+The code pertaining to this blog can be found [here](https://github.com/mmahesh/dstack_test/).
+
 Dstack is a framework to automate the entire workflow of managing the training of a deep learning model on a cloud based GPU/CPU server. 
 
 The pre-requisites to understand this blog include:
