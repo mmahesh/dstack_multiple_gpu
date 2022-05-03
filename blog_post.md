@@ -286,7 +286,10 @@ The contents of the main function are mostly self explanatory and training proce
 
 Dstack is a comprehensive framework to automate the process of training deep learning models on the cloud. Typically, one is required is lauch a GPU/CPU instance on cloud using a vendor like AWS or Google Cloud or Azure and install the required packages. Then, download the git repository where one is required to do the experiments and then perform the training.
 
-Dstack automates this entire process. 
+Dstack automates this entire process via a specification of the requirements in declarative configuration files. For more details, please see [here](https://docs.dstack.ai/).
+
+Firstly, create a account at `dstack.ai` and configure the settings appropriately according to the CPU/GPU requirements. In our case, it looks like the following:
+ ![AWS settings](/blog_figures/fig_1.png)
 
 
 We consider three workflows, where we train our deep learning model on a CPU, a GPU and on multiple GPUs. These workflows need to be be added in `.dstack/workflows.yaml` file. The contents of this file should be akin to the following:
@@ -409,11 +412,11 @@ Then, finally in order to run the experiments, run the following command in your
 ./run_exps.sh
 ```
 
-Now, open [dstack.ai](https://dstack.ai) to see the workflows (after you perform the login). You will see contents like below.
+Now, open [dstack.ai](https://dstack.ai) to see the workflows (after you perform the login). You will see contents of the `Runs` tab like below.
 
 ![Workflows](/blog_figures/fig_2.png)
 
-You can check each workflow by clicking on the respective button. 
+You can check each workflow by clicking on the respective button. In the `Runners` tab, you will find information of the specific instances being used.
 
 
 > For the workflow `train-mnist-multi-gpu`, since multiple GPUs are required you may need to add `p3.8xlarge` GPU instance of AWS in the dstack settings. In order to do this, click on the settings tab on the left side of the [dstack.ai](https://dstack.ai) interface. In the settings frame, there is AWS tab, where we can see a button `Add a limit`. On clicking that button, you can select the  `p3.8xlarge` GPU instance of AWS. In the end, you should see the following in the dstack website:
@@ -421,4 +424,13 @@ You can check each workflow by clicking on the respective button.
 
 # Conclusion
 
-In the above blog, we have seen how to train deep learning models on AWS CPU/GPU instance. 
+In the above blog, we have seen how to 
+
+- create a deep learning model using Pytorch Lightning,
+- choose appropriate settings for the dstack workflows,
+- and run the dstack workflows using AWS CPU/GPU instances.
+
+# References
+
+- [Dstack documentation](https://docs.dstack.ai)
+- [Pytorch Lightning](https://www.pytorchlightning.ai/)
