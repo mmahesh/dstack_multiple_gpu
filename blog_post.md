@@ -10,12 +10,13 @@ The pre-requisites to understand this blog include:
     - familiarity with python,
     - basic familiarity with pytorch (a popular deep learning framework).
 
-We use `python 3` version for this blog. The contents of this blog include the following:
+We use `python 3` version for this blog. The contents of this blog mainly include 
 
-    - introduction to pytorch lightning,
-    - create a simple deep learning model to train on MNIST dataset,
-    - creating dstack workflow,
-    - and run the deep learning on AWS GPU/CPU instances using dstack.
+    - a brief introduction to pytorch lightning,
+    - a brief introduction to dstack,
+    - creating a simple deep learning model to train on the popular MNIST dataset,
+    - creating dstack workflows for various settings,
+    - and running the deep learning models on AWS GPU/CPU instances using dstack workflows.
 
 # Requirements
 
