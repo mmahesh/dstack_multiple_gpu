@@ -52,14 +52,15 @@ torch
 torchvision
 pytorch-lightning==1.6.2
 ```
+The rest of the files will be detailed later in this blog.
 
 # Brief Primer on Pytorch Lightning
 
 As mentioned earlier,  we use the Pytorch Lightning framework to create our deep learning models.
 
-Pytorch Lightning is a deep learning framework built on pure PyTorch without having to write the boilerplate code. In essence, the training of complex deep learning models becomes straightforward.
+Pytorch Lightning is a deep learning framework built on pure PyTorch without having to write the boilerplate code. In essence, the training of complex deep learning models becomes straightforward. For example, with Pytorch Lightning the training of a deep learning model on a CPU, a GPU, and multiple GPUs can be done seamlessly without having to write large chunks of code for each case seperately.   
 
-For example, with Pytorch Lightning the training of a deep learning model on a CPU, a GPU, and multiple GPUs can be done seamlessly without having to write large chunks of code for each case seperately.   
+For further information, please see [here](https://www.pytorchlightning.ai/).
 
 ## Pytorch Lightning Imports
 We now focus on the contents of the `train.py` file in our current working directory. 
@@ -94,6 +95,8 @@ In Pytorch Lightning, we can capture all the components of the training of the d
 ```python
 class LitAutoEncoder(pl.LightningModule):
 ```
+
+Note that the class `LitAutoEncoder` inherits all the methods of `pl.LightningModule` object.
 
 We use the  `__init__` method to create the model. We describe the components of the `__init__` method first.
 
@@ -228,8 +231,57 @@ class LitAutoEncoder(pl.LightningModule):
         self.log('val_loss', loss, on_step=True, on_epoch=True, sync_dist=True)
 ```
 
-Now that our model is setup, we need to consider the other part of training the deep learning model,
-  
+Now that our model is setup, we need to consider the other part of training the deep learning model which is handled by the `main()` function given below:
+
+```python
+def main():
+	"""
+	Main function that handles all the dataset pre-processing, 
+	instantiating the model  and training that model.
+	"""
+	# download and pre-process the MNIST dataset
+	dataset = MNIST('data', train=True, download=True, \
+		transform=transforms.ToTensor())
+	mnist_train, mnist_val = random_split(dataset, [55000, 5000])
+
+	# Instantiate the dataloader on training dataset 
+	# and the validation dataset with appropriate batch_size
+	train_loader = DataLoader(mnist_train, batch_size=32, pin_memory=True)
+	val_loader = DataLoader(mnist_val, batch_size=32,
+							pin_memory=True)
+
+	# Instantiate model instance 
+	model = LitAutoEncoder()
+
+	# check if cuda is available 
+	# and get number of gpus into the variable num_gpus
+	if torch.cuda.is_available():
+		num_gpus = torch.cuda.device_count()
+	else:
+		num_gpus = 0
+
+	# choose accelerator based on the number of gpus
+	if num_gpus == 0:
+		accelerator_name = 'cpu'
+	elif num_gpus == 1:
+		accelerator_name = 'gpu'
+	elif num_gpus > 1:
+		accelerator_name = 'gpu' # TODO: Later change this to dp
+	else:
+		raise 
+
+	
+	# trainer instance with appropriate settings
+	trainer = pl.Trainer(gpus=num_gpus, accelerator=accelerator_name,
+						 limit_train_batches=0.5, max_epochs=1)
+
+	# fit with trainer 
+	print('starting to fit')
+	trainer.fit(model, train_loader, val_loader)
+```
+
+The contents of the main function are mostly self explanatory and training process is very similar to training a deep learning in pure Pytorch. Here, with Pytorch Lightning, we use the `pl.Trainer` object to specify the training type. In particular, depending of the number of GPU on the device we have to set the arguments `gpus`, `accelerator` appropriately. For CPU, we need to set `accelerator = 'cpu'` and for the rest of cases, we set `accelerator = 'gpu'`. 
+
 # Our Dstack Workflow
 
 Dstack is a comprehensive framework to automate the process of training deep learning models on the cloud. Typically, one is required is lauch a GPU/CPU instance on cloud using a vendor like AWS or Google Cloud or Azure and install the required packages. Then, download the git repository where one is required to do the experiments and then perform the training.
@@ -332,7 +384,9 @@ In order to run a workflow, say `train-mnist-no-gpu`, all we have to do is to ex
 dstack run train-mnist-no-gpu
 ```
 
-In order to run the workflows in an automated manner, we create a bash script `run_exps.sh` with the following contents:
+dstack automatically provisions the AWS instance required on-demand.
+
+In order to run all the workflows in an automated manner, we create a bash script `run_exps.sh` with the following contents:
 
 ```bash
 dstack run train-mnist-no-gpu
@@ -343,7 +397,7 @@ dstack run train-mnist-multi-gpu
 wait 
 ```
 
-In order to make the above bash script an executable, you need to run in your terminal the following command:
+In order to make the above bash script an executable, you need to run  the following command in your terminal:
 
 ```bash
 chmod +x run_exps.sh
@@ -355,7 +409,7 @@ Then, finally in order to run the experiments, run the following command in your
 ./run_exps.sh
 ```
 
-Now, open [dstack.ai](https://dstack.ai) to see the workflows (after you perform the login). You will see something like the following:
+Now, open [dstack.ai](https://dstack.ai) to see the workflows (after you perform the login). You will see contents like below.
 
 ![Workflows](/blog_figures/fig_2.png)
 
