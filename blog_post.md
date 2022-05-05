@@ -400,12 +400,15 @@ In order to run all the workflows in an automated manner, we create a bash scrip
 
 ```bash
 dstack run train-mnist-no-gpu
-wait 
+wait  
+sleep 360
 dstack run train-mnist-one-gpu
 wait 
+sleep 360
 dstack run train-mnist-multi-gpu
 wait 
 ```
+> Here, we add `sleep` and `wait` commands for not exhausting `dstack` to create resources while creating jobs. Otherwise, some jobs might fail. This issue will be resolved soon.
 
 In order to make the above bash script an executable, you need to run  the following command in your terminal:
 
@@ -423,7 +426,9 @@ Now, open [dstack.ai](https://dstack.ai) to see the workflows (after you perform
 
 ![Workflows](/blog_figures/fig_2.png)
 
-You can check each workflow by clicking on the respective button. In the `Runners` tab, you will find information of the specific instances being used.
+You can check each workflow by clicking on the respective button. In the `Logs` tab, you will see the cloud server running the `train.py` after few minutes of starting the job. 
+
+In the `Runners` tab on the left side, you will find information of the specific instances being used.
 
 
 > For the workflow `train-mnist-multi-gpu`, since multiple GPUs are required you may need to add `p3.8xlarge` GPU instance of AWS in the dstack settings. In order to do this, click on the settings tab on the left side of the [dstack.ai](https://dstack.ai) interface. In the settings frame, there is AWS tab, where we can see a button `Add a limit`. On clicking that button, you can select the  `p3.8xlarge` GPU instance of AWS. In the end, you should see the following in the dstack website:
