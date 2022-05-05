@@ -1,6 +1,6 @@
 # Introduction
 
-Dstack is a framework to automate the entire workflow of managing the training of a deep learning model on a cloud based GPU/CPU server. In this blog, we are going to see how to run your deep learning models on cloud based compute servers via [dstack](https://dstack.ai). The documentation for dstack can be found [here](https://docs.dstack.ai).
+Dstack is a framework to automate the entire workflow of managing the training of a deep learning models on a cloud based GPU/CPU server. In this blog, we are going to see how to run your deep learning models on cloud based CPU/GPU servers via [dstack](https://dstack.ai). The documentation for dstack can be found [here](https://docs.dstack.ai).
 
 The code pertaining to this blog can be found [here](https://github.com/mmahesh/dstack_test/).
 
@@ -10,7 +10,7 @@ The pre-requisites to understand this blog include:
     - familiarity with python,
     - basic familiarity with pytorch (a popular deep learning framework).
 
-We use `python 3` version for this blog. The contents of this blog mainly include 
+We use `Python 3` for the programming part. The contents of this blog mainly include 
 
     - a brief introduction to pytorch lightning,
     - a brief introduction to dstack,
@@ -66,7 +66,7 @@ For further information, please see [here](https://www.pytorchlightning.ai/).
 ## Pytorch Lightning Imports
 We now focus on the contents of the `train.py` file in our current working directory. 
 
-Typically, we have to add the following import statements for a pytorch script.
+Typically, we have to add the following import statements for a pytorch script, when working with the popular MNIST dataset.
 
 ```python
 import torch
@@ -78,6 +78,7 @@ from torchvision.datasets import MNIST
 from torchvision import transforms
 ```
 
+
 With Pytorch Lightning, we have to add one additional import statement as below.
 
 ```python
@@ -85,7 +86,7 @@ import pytorch_lightning as pl
 ```
 
 # Simple Deep Learning Model
-We continue editing the content of the `train.py` file in our current working directory.
+We continue editing the contents of the `train.py` file in our current working directory.
 
 We consider the standard deep learning example from the Pytorch Lightning website. We use a simple Autoencoder for training on the MNIST dataset. In the MNIST dataset, there are 60000 images of size 28 x 28. The Autoencoder is divided into two components, namely the encoder component and the decoder component. 
 
@@ -236,56 +237,61 @@ Now that our model is setup, we need to consider the other part of training the 
 
 ```python
 def main():
-	"""
-	Main function that handles all the dataset pre-processing, 
-	instantiating the model  and training that model.
-	"""
-	# download and pre-process the MNIST dataset
-	dataset = MNIST('data', train=True, download=True, \
-		transform=transforms.ToTensor())
-	mnist_train, mnist_val = random_split(dataset, [55000, 5000])
+    """
+    Main function that handles all the dataset pre-processing, 
+    instantiating the model  and training that model.
+    """
+    # download and pre-process the MNIST dataset
+    dataset = MNIST('data', train=True, download=True, \
+      transform=transforms.ToTensor())
+    mnist_train, mnist_val = random_split(dataset, [55000, 5000])
 
-	# Instantiate the dataloader on training dataset 
-	# and the validation dataset with appropriate batch_size
-	train_loader = DataLoader(mnist_train, batch_size=32, pin_memory=True)
-	val_loader = DataLoader(mnist_val, batch_size=32,
-							pin_memory=True)
+    # Instantiate the dataloader on training dataset 
+    # and the validation dataset with appropriate batch_size
+    train_loader = DataLoader(mnist_train, batch_size=32, pin_memory=True)
+    val_loader = DataLoader(mnist_val, batch_size=32,
+                pin_memory=True)
 
-	# Instantiate model instance 
-	model = LitAutoEncoder()
+    # Instantiate model instance 
+    model = LitAutoEncoder()
 
-	# check if cuda is available 
-	# and get number of gpus into the variable num_gpus
-	if torch.cuda.is_available():
-		num_gpus = torch.cuda.device_count()
-	else:
-		num_gpus = 0
+    # check if cuda is available 
+    # and get number of gpus into the variable num_gpus
+    if torch.cuda.is_available():
+      num_gpus = torch.cuda.device_count()
+    else:
+      num_gpus = 0
 
-	# choose accelerator based on the number of gpus
-	if num_gpus == 0:
-		accelerator_name = 'cpu'
-	elif num_gpus == 1:
-		accelerator_name = 'gpu'
-	elif num_gpus > 1:
-		accelerator_name = 'gpu' # TODO: Later change this to dp
-	else:
-		raise 
+    # choose accelerator based on the number of gpus
+    if num_gpus == 0:
+      accelerator_name = 'cpu'
+    elif num_gpus == 1:
+      accelerator_name = 'gpu'
+    elif num_gpus > 1:
+      accelerator_name = 'gpu' # TODO: Later change this to dp
+    else:
+      raise 
 
-	
-	# trainer instance with appropriate settings
-	trainer = pl.Trainer(gpus=num_gpus, accelerator=accelerator_name,
-						 limit_train_batches=0.5, max_epochs=1)
 
-	# fit with trainer 
-	print('starting to fit')
-	trainer.fit(model, train_loader, val_loader)
+    # trainer instance with appropriate settings
+    trainer = pl.Trainer(gpus=num_gpus, accelerator=accelerator_name,
+                limit_train_batches=0.5, max_epochs=1)
+
+    # fit with trainer 
+    print('starting to fit')
+    trainer.fit(model, train_loader, val_loader)
 ```
 
-The contents of the main function are mostly self explanatory and training process is very similar to training a deep learning in pure Pytorch. Here, with Pytorch Lightning, we use the `pl.Trainer` object to specify the training type. In particular, depending of the number of GPU on the device we have to set the arguments `gpus`, `accelerator` appropriately. For CPU, we need to set `accelerator = 'cpu'` and for the rest of cases, we set `accelerator = 'gpu'`. 
+The contents of the main function are mostly self explanatory and training process is very similar to training a deep learning in pure Pytorch. However, we will briefly explain the working of the `main` function. Initially, we load the MNIST dataset via `MNIST` object which we imported earlier. The parameter value `data` essentially created a folder with name `data`.  Other parameters are standard in Pytorch. Next, we split the MNIST dataset of 60000 images into two sets, `mnist_train` with 55000 images and `mnist_val` with 5000 images. Later, we use the standard `DataLoader` object to efficiently pass the images as batches for training the deep learning model. We instantiate the `DataLoader` for the training set `mnist_train` and the validation set `mnist_val`. Then, we instantiate our model in `model` object via previously created `LitAutoEncoder` object. 
+
+With Pytorch Lightning, we use the `pl.Trainer` object to specify the training type. In particular, depending of the number of GPUs on the device (can be checked via `torch.cuda.is_available()`) we have to set the arguments `gpus`, `accelerator` appropriately. For CPU, we need to set `accelerator = 'cpu'` and for the rest of cases, we set `accelerator = 'gpu'`.
+
+Finally, in order to fit the model instance with the training data and obtain results also on the validation data, we have the call the `fit` method of `trainer` object as following:
+`trainer.fit(model, train_loader, val_loader)`
 
 # Our Dstack Workflow
 
-Dstack is a comprehensive framework to automate the process of training deep learning models on the cloud. Typically, one is required is lauch a GPU/CPU instance on cloud using a vendor like AWS or Google Cloud or Azure and install the required packages. Then, download the git repository where one is required to do the experiments and then perform the training.
+Dstack is a comprehensive framework to automate the process of training deep learning models on the cloud. Typically, one is required is lauch a GPU/CPU instance on cloud using a vendor like AWS or Google Cloud or Azure and install the required packages. Then, download the git repository to train the deep learning models.
 
 Dstack automates this entire process via a specification of the requirements in declarative configuration files. For more details, please see [here](https://docs.dstack.ai/).
 
