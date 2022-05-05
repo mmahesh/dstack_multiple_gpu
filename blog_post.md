@@ -408,7 +408,7 @@ sleep 360
 dstack run train-mnist-multi-gpu
 wait 
 ```
-> Here, we add `sleep` and `wait` commands for not exhausting `dstack` to create resources while creating jobs. Otherwise, some jobs might fail. This issue will be resolved soon.
+> Here, we add `sleep` and `wait` commands for not exhausting `dstack`  while creating jobs. Otherwise, some jobs might fail. This issue will be resolved soon.
 
 In order to make the above bash script an executable, you need to run  the following command in your terminal:
 
