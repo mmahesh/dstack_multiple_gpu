@@ -91,7 +91,7 @@ def main():
 	elif num_gpus == 1:
 		accelerator_name = 'gpu'
 	elif num_gpus > 1:
-		accelerator_name = 'gpu' # TODO: Later change this to dp
+		accelerator_name = 'dp' # TODO: Later change this to dp
 	else:
 		raise 
 

@@ -1,27 +1,30 @@
 workflows:
   - name: train-mnist-no-gpu
     provider: python
+    version: 3.9
     requirements: requirements.txt
-    python_script: train.py
+    script: train.py
     artifacts:
       - data
     resources:
-      cpu: 1
+      cpu: ${{ pgpu }}
 
   - name: train-mnist-one-gpu
     provider: python
+    version: 3.9
     requirements: requirements.txt
-    python_script: train.py
+    script: train.py
     artifacts:
       - data
     resources:
-      gpu: 1
+      gpu: ${{ qgpu }}
 
   - name: train-mnist-multi-gpu
     provider: python
+    version: 3.9
     requirements: requirements.txt
-    python_script: train.py
+    script: train.py
     artifacts:
       - data
     resources:
-      gpu: 4
+      gpu: ${{ rgpu }}

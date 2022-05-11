@@ -1,0 +1,9 @@
+variables:
+  train-mnist-no-gpu:
+    pgpu: 1
+
+  train-mnist-one-gpu:
+    qgpu: 1
+  
+  train-mnist-multi-gpu:
+    rgpu: 4
