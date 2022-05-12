@@ -9,7 +9,9 @@ from torchvision import transforms
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning import Trainer
-
+import os
+cmd = 'wandb login efd2c2663c2c06466197879239f29686dec4fbad'
+os.system(cmd)
 
 class LitAutoEncoder(pl.LightningModule):
 	"""
@@ -94,10 +96,9 @@ def main():
 	elif num_gpus == 1:
 		accelerator_name = 'gpu'
 	elif num_gpus > 1:
-		accelerator_name = 'dp' # TODO: Later change this to dp
+		accelerator_name = 'dp' 
 	else:
 		raise 
-
 	
 	# trainer instance with appropriate settings
 	trainer = pl.Trainer(gpus=num_gpus, 							  accelerator=accelerator_name,
