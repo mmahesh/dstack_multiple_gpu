@@ -1,3 +1,5 @@
+# Building a pipeline for training on multiple GPUs with dstack
+
 # Introduction
 
 Dstack is a framework to automate the entire workflow of managing the training of a deep learning models on a cloud based GPU/CPU server. In this blog, we are going to see how to run your deep learning models on cloud based CPU/GPU servers via [dstack](https://dstack.ai). The documentation for dstack can be found [here](https://docs.dstack.ai).
@@ -38,7 +40,6 @@ dstack_test/
     .dstack/
         workflows.yaml
     train.py 
-    run_exps.sh
     requirements.txt 
 ```
 
@@ -55,7 +56,7 @@ pytorch-lightning==1.6.2
 ```
 The rest of the files will be detailed later in this blog.
 
-# Brief Primer on Pytorch Lightning
+# Simple Deep Learning Model
 
 As mentioned earlier,  we use the Pytorch Lightning framework to create our deep learning models.
 
@@ -63,7 +64,6 @@ Pytorch Lightning is a deep learning framework built on pure PyTorch without hav
 
 For further information, please see [here](https://www.pytorchlightning.ai/).
 
-## Pytorch Lightning Imports
 We now focus on the contents of the `train.py` file in our current working directory. 
 
 Typically, we have to add the following import statements for a pytorch script, when working with the popular MNIST dataset.
@@ -85,7 +85,6 @@ With Pytorch Lightning, we have to add one additional import statement as below.
 import pytorch_lightning as pl
 ```
 
-# Simple Deep Learning Model
 We continue editing the contents of the `train.py` file in our current working directory.
 
 We consider the standard deep learning example from the Pytorch Lightning website. We use a simple Autoencoder for training on the MNIST dataset. In the MNIST dataset, there are 60000 images of size 28 x 28. The Autoencoder is divided into two components, namely the encoder component and the decoder component. 
@@ -142,50 +141,6 @@ Apart from the  `__init__` method, the we have the following methods in `LitAuto
     - `training_step` method,
     - `validation_step` method,
     - `configure_optimizers` method.
-
-The output embedding of the encoder can be obtained by the following function:
-
-```python
-def forward(self, x):
-    embedding = self.encoder(x)
-    return embedding
-```
-
-The training part involves passing images of batch size 32 via a dataloader to the deep learning model which is a conjunction of encoder and the decoder. One the output is obtained, it is compared with the original images and then mean squared loss is computed. This entire process is captured by the following function:
-
-```python
-def training_step(self, train_batch, batch_idx):
-    x, y = train_batch
-    x = x.view(x.size(0), -1)
-    z = self.encoder(x)
-    x_hat = self.decoder(z)
-    loss = F.mse_loss(x_hat, x)
-    self.log('train_loss', loss, on_step=True, on_epoch=True, sync_dist=True)
-    return loss
-```
-
-The same process for the validation dataset is captured by the following function:
-
-```python
-def validation_step(self, val_batch, batch_idx):
-    x, y = val_batch
-    x = x.view(x.size(0), -1)
-    z = self.encoder(x)
-    x_hat = self.decoder(z)
-    loss = F.mse_loss(x_hat, x)
-    self.log('val_loss', loss, on_step=True, on_epoch=True, sync_dist=True)
-```
-
-
-
-In order to minimize the loss, we use the Adam optimizer, which is a popular optimizer that is well known for training deep learning models efficiently. The optimizer is configured by the following function:
-
-```python
-def configure_optimizers(self):
-    optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
-    return optimizer
-```
-
 
 Collecting all the above methods under the class `LitAutoEncoder` we finally have 
 
@@ -268,7 +223,7 @@ def main():
     elif num_gpus == 1:
       accelerator_name = 'gpu'
     elif num_gpus > 1:
-      accelerator_name = 'gpu' # TODO: Later change this to dp
+      accelerator_name = 'dp' # data parallel setting
     else:
       raise 
 
@@ -284,7 +239,7 @@ def main():
 
 The contents of the main function are mostly self explanatory and training process is very similar to training a deep learning in pure Pytorch. However, we will briefly explain the working of the `main` function. Initially, we load the MNIST dataset via `MNIST` object which we imported earlier. The parameter value `data` essentially created a folder with name `data`.  Other parameters are standard in Pytorch. Next, we split the MNIST dataset of 60000 images into two sets, `mnist_train` with 55000 images and `mnist_val` with 5000 images. Later, we use the standard `DataLoader` object to efficiently pass the images as batches for training the deep learning model. We instantiate the `DataLoader` for the training set `mnist_train` and the validation set `mnist_val`. Then, we instantiate our model in `model` object via previously created `LitAutoEncoder` object. 
 
-With Pytorch Lightning, we use the `pl.Trainer` object to specify the training type. In particular, depending of the number of GPUs on the device (can be checked via `torch.cuda.is_available()`) we have to set the arguments `gpus`, `accelerator` appropriately. For CPU, we need to set `accelerator = 'cpu'` and for the rest of cases, we set `accelerator = 'gpu'`.
+With Pytorch Lightning, we use the `pl.Trainer` object to specify the training type. In particular, depending of the number of GPUs on the device (can be checked via `torch.cuda.is_available()`) we have to set the arguments `gpus`, `accelerator` appropriately. For CPU, we need to set `accelerator = 'cpu'` and for the rest of cases, we set `accelerator = 'gpu'`. [TODO]
 
 Finally, in order to fit the model instance with the training data and obtain results also on the validation data, we have the call the `fit` method of `trainer` object as following:
 `trainer.fit(model, train_loader, val_loader)`
@@ -299,7 +254,7 @@ Firstly, create a account at `dstack.ai` and configure the settings appropriatel
  ![AWS settings](/blog_figures/fig_1.png)
 
 
-We consider three workflows, where we train our deep learning model on a CPU, a GPU and on multiple GPUs. These workflows need to be be added in `.dstack/workflows.yaml` file. The contents of this file should be akin to the following:
+We consider the workflow, where we train our deep learning model on multiple GPUs. This workflow needs to be be added in `.dstack/workflows.yaml` file. The contents of this file should be akin to the following:
 
 ```yaml
 workflows:
@@ -308,74 +263,12 @@ workflows:
   - name: WORKFLOW_3
 ```
 
-The workflow pertaining to training our deep learning model on a CPU is the following:
+Dstack extracts the requirements to run the deep learning model from `requirements.txt`, which we pass it as a value to requirements property in the workflow. Since, we require four GPUs, we specify that under `resources` key. 
 
-```yaml
-name: train-mnist-no-gpu
-provider: python
-requirements: requirements.txt
-python_script: train.py
-artifacts:
-  - data
-resources:
-  cpu: 1
-```
-
-As seen above, we named the workflow to reflect the fact that we do not use a GPU. The provider property is set to python, and under the hood dstack uses python 3.10 version. 
-
-Dstack extracts the requirements to run the deep learning model from `requirements.txt`, which we pass it as a value to requirements property in the workflow. Since, we require one CPU instance, we specify that under `resources` key. 
-
-The workflow pertaining to training our deep learning model on a GPU is the following:
-
-```yaml
-name: train-mnist-one-gpu
-provider: python
-requirements: requirements.txt
-python_script: train.py
-artifacts:
-  - data
-resources:
-  gpu: 1
-```
-
-The workflow pertaining to training our deep learning model on multiple GPUs is the following:
-
-```yaml
-name: train-mnist-multi-gpu
-provider: python
-requirements: requirements.txt
-python_script: train.py
-artifacts:
-  - data
-resources:
-  gpu: 4
-```
-
-
-
-
-The contents of the `.dstack/workflows.yaml` file finally looks like below.
+The contents of the `.dstack/workflows.yaml` file  looks like below.
 
 ```yaml
 workflows:
-  - name: train-mnist-no-gpu
-    provider: python
-    requirements: requirements.txt
-    python_script: train.py
-    artifacts:
-      - data
-    resources:
-      cpu: 1
-
-  - name: train-mnist-one-gpu
-    provider: python
-    requirements: requirements.txt
-    python_script: train.py
-    artifacts:
-      - data
-    resources:
-      gpu: 1
-
   - name: train-mnist-multi-gpu
     provider: python
     requirements: requirements.txt
@@ -383,44 +276,24 @@ workflows:
     artifacts:
       - data
     resources:
-      gpu: 4
+      gpu: ${{ gpu }}
 ```
 
-# Automation
+The contents of the `.dstack/variables.yaml` file looks like below.
 
-In order to run a workflow, say `train-mnist-no-gpu`, all we have to do is to execute the following command in the terminal
-
-```bash 
-dstack run train-mnist-no-gpu
+```yaml
+variables:
+  train-mnist-multi-gpu:
+    gpu: 4
 ```
 
-dstack automatically provisions the AWS instance required on-demand.
 
-In order to run all the workflows in an automated manner, we create a bash script `run_exps.sh` with the following contents:
+In order to run the workflow all we have to do is to execute the following command in the terminal
 
 ```bash
-dstack run train-mnist-no-gpu
-wait  
-sleep 360
-dstack run train-mnist-one-gpu
-wait 
-sleep 360
 dstack run train-mnist-multi-gpu
-wait 
-```
-> Here, we add `sleep` and `wait` commands for not exhausting `dstack`  while creating jobs. Otherwise, some jobs might fail. This issue will be resolved soon.
-
-In order to make the above bash script an executable, you need to run  the following command in your terminal:
-
-```bash
-chmod +x run_exps.sh
 ```
 
-Then, finally in order to run the experiments, run the following command in your terminal:
-
-```bash
-./run_exps.sh
-```
 
 Now, open [dstack.ai](https://dstack.ai) to see the workflows (after you perform the login). You will see contents of the `Runs` tab like below.
 
@@ -430,17 +303,8 @@ You can check each workflow by clicking on the respective button. In the `Logs` 
 
 In the `Runners` tab on the left side, you will find information of the specific instances being used.
 
-
-> For the workflow `train-mnist-multi-gpu`, since multiple GPUs are required you may need to add `p3.8xlarge` GPU instance of AWS in the dstack settings. In order to do this, click on the settings tab on the left side of the [dstack.ai](https://dstack.ai) interface. In the settings frame, there is AWS tab, where we can see a button `Add a limit`. On clicking that button, you can select the  `p3.8xlarge` GPU instance of AWS. In the end, you should see the following in the dstack website:
+For the workflow `train-mnist-multi-gpu`, since multiple GPUs are required you may need to add `p3.8xlarge` GPU instance of AWS in the dstack settings. In order to do this, click on the settings tab on the left side of the [dstack.ai](https://dstack.ai) interface. In the settings frame, there is AWS tab, where we can see a button `Add a limit`. On clicking that button, you can select the  `p3.8xlarge` GPU instance of AWS. In the end, you should see the following in the dstack website:
  ![AWS settings](/blog_figures/fig_1.png)
-
-# Conclusion
-
-In the above blog, we have seen how to 
-
-- create a deep learning model using Pytorch Lightning,
-- choose appropriate settings for the dstack workflows,
-- and run the dstack workflows using AWS CPU/GPU instances.
 
 # References
 

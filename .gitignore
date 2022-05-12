@@ -3,3 +3,6 @@ MNIST/*
 lightning_logs/*
 .DS_Store
 **/.DS_Store
+wandb/*
+my-test-project/*
+data/*

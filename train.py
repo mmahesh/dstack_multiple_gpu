@@ -7,6 +7,9 @@ from torch.utils.data import random_split
 from torchvision.datasets import MNIST
 from torchvision import transforms
 import pytorch_lightning as pl
+from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning import Trainer
+
 
 class LitAutoEncoder(pl.LightningModule):
 	"""
@@ -97,8 +100,8 @@ def main():
 
 	
 	# trainer instance with appropriate settings
-	trainer = pl.Trainer(gpus=num_gpus, accelerator=accelerator_name,
-						 limit_train_batches=0.5, max_epochs=1)
+	trainer = pl.Trainer(gpus=num_gpus, 							  accelerator=accelerator_name,
+                      limit_train_batches=0.5, max_epochs=10, logger=wandb_logger)
 
 	# fit with trainer 
 	print('starting to fit')
@@ -106,5 +109,7 @@ def main():
 
 
 if __name__ == '__main__':
+	wandb_logger = WandbLogger(project="my-test-project")
+
 	# running the deep learning model now
 	main()

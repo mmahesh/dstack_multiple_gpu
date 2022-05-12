@@ -1,3 +1,4 @@
 torch
 torchvision
 pytorch-lightning==1.6.2
+wandb==0.12.16
