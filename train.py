@@ -74,16 +74,7 @@ def main():
 		transform=transforms.ToTensor())
 	mnist_train, mnist_val = random_split(dataset, [55000, 5000])
 
-	# Instantiate the dataloader on training dataset 
-	# and the validation dataset with appropriate batch_size
-	train_loader = DataLoader(mnist_train, batch_size=32, pin_memory=True)
-	val_loader = DataLoader(mnist_val, batch_size=32,
-							pin_memory=True)
-
-	# Instantiate model instance 
-	model = LitAutoEncoder()
-
-	# check if cuda is available 
+	# check if cuda is available
 	# and get number of gpus into the variable num_gpus
 	if torch.cuda.is_available():
 		num_gpus = torch.cuda.device_count()
@@ -96,9 +87,26 @@ def main():
 	elif num_gpus == 1:
 		accelerator_name = 'gpu'
 	elif num_gpus > 1:
-		accelerator_name = 'dp' 
+		accelerator_name = 'dp'
 	else:
-		raise 
+		raise
+
+	if num_gpus == 0:
+		batch_size = 32
+	else:
+		batch_size = 32*num_gpus
+
+	# Instantiate the dataloader on training dataset 
+	# and the validation dataset with appropriate batch_size
+	train_loader = DataLoader(
+		mnist_train, batch_size=batch_size, num_workers=8,  pin_memory=True)
+	val_loader = DataLoader(mnist_val, batch_size=batch_size, num_workers=8, 
+							pin_memory=True)
+
+	# Instantiate model instance 
+	model = LitAutoEncoder()
+
+	
 	
 	# trainer instance with appropriate settings
 	trainer = pl.Trainer(gpus=num_gpus, 							  accelerator=accelerator_name,
