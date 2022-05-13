@@ -2,7 +2,9 @@
 
 # Introduction
 
-Dstack is a framework to automate the entire workflow of managing the training of a deep learning models on a cloud based GPU/CPU server. In this blog, we are going to see how to run your deep learning models on cloud based CPU/GPU servers via [dstack](https://dstack.ai). The documentation for dstack can be found [here](https://docs.dstack.ai).
+The objective of this blog is:
+  - to show how to build a deep learning training pipeline that uses multiple GPUs via a AWS server on the cloud;
+- to show how to use [dstack](https://dstack.ai), a framework to automate the entire workflow of training of a deep learning models on cloud, for building training pipelines.
 
 The code pertaining to this blog can be found [here](https://github.com/mmahesh/dstack_test/).
 
@@ -10,25 +12,29 @@ The pre-requisites to understand this blog include:
 
     - familiarity with deep learning,
     - familiarity with python,
-    - basic familiarity with pytorch (a popular deep learning framework).
+    - familiarity with pytorch and pytorch-lightning,
+    - and familiarity with wandb (a cloud based tool for experiment tracking).
 
-We use `Python 3` for the programming part. The contents of this blog mainly include 
+We use `Python 3` for the programming part. 
 
-    - a brief introduction to pytorch lightning,
-    - a brief introduction to dstack,
+
+
+The contents of this blog mainly include 
+
     - creating a simple deep learning model to train on the popular MNIST dataset,
-    - creating dstack workflows for various settings,
-    - and running the deep learning models on AWS GPU/CPU instances using dstack workflows.
+    - creating dstack workflows for training the model using multiple GPUs on a AWS server in the cloud,
+    -  running the deep learning models using dstack workflows and monotoring the results via wandb.
 
 # Requirements
 
-Firstly, we need to install `dstack`,  `pytorch-lightning`, `torch` and `torchvision` packages. For this, you need to run the following commands in your terminal:
+Firstly, we need to install `dstack`,  `pytorch-lightning`, `torch`,  `torchvision` and `wandb` packages. For this, you need to run the following commands in your terminal:
 
 ```bash
-pip install dstack==0.0.4rc8 
-pip install pytorch-lightning==1.6.2
+pip install dstack
+pip install pytorch-lightning
 pip install torch
 pip install torchvision
+pip install wandb
 ```
 
 # Directory Setup
@@ -39,6 +45,7 @@ We follow the directory structure below, where our main working directory is `ds
 dstack_test/
     .dstack/
         workflows.yaml
+        variables.yaml
     train.py 
     requirements.txt 
 ```
@@ -52,23 +59,24 @@ It has the following lines:
 ```
 torch
 torchvision
-pytorch-lightning==1.6.2
+pytorch-lightning
+wandb
 ```
+There is no need to add `dstack` to the `requirements.txt` file.
+
 The rest of the files will be detailed later in this blog.
 
 # Simple Deep Learning Model
 
-As mentioned earlier,  we use the Pytorch Lightning framework to create our deep learning models.
+We rely on Pytorch Lightning, a deep learning framework to train our model.
+For further information on Pytorch Lightning. please see [here](https://www.pytorchlightning.ai/).
 
-Pytorch Lightning is a deep learning framework built on pure PyTorch without having to write the boilerplate code. In essence, the training of complex deep learning models becomes straightforward. For example, with Pytorch Lightning the training of a deep learning model on a CPU, a GPU, and multiple GPUs can be done seamlessly without having to write large chunks of code for each case seperately.   
+For the purpose of visualization of the results, we used `wandb` package.  For more details regarding `wandb`, please see [here](https://wandb.ai/site).
 
-For further information, please see [here](https://www.pytorchlightning.ai/).
-
-We now focus on the contents of the `train.py` file in our current working directory. 
-
-Typically, we have to add the following import statements for a pytorch script, when working with the popular MNIST dataset.
+The contents of the `train.py` file are given below and are mostly self explanatory. The training process is very similar to training a deep learning in pure Pytorch.
 
 ```python
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -76,106 +84,50 @@ from torch.utils.data import DataLoader
 from torch.utils.data import random_split
 from torchvision.datasets import MNIST
 from torchvision import transforms
-```
-
-
-With Pytorch Lightning, we have to add one additional import statement as below.
-
-```python
 import pytorch_lightning as pl
-```
+from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning import Trainer
+import wandb
 
-We continue editing the contents of the `train.py` file in our current working directory.
 
-We consider the standard deep learning example from the Pytorch Lightning website. We use a simple Autoencoder for training on the MNIST dataset. In the MNIST dataset, there are 60000 images of size 28 x 28. The Autoencoder is divided into two components, namely the encoder component and the decoder component. 
-
-The encoder component typically takes the input signal and compresses the signal to a latent space of much lower dimension. The decoder component tries to reconstruct the signal using the information from the latent space. 
-
-In Pytorch Lightning, we can capture all the components of the training of the deep learning model under a single python class, which we call 
-
-```python
 class LitAutoEncoder(pl.LightningModule):
-```
+    """
+    Autoencoder model with Pytorch Lightning
 
-Note that the class `LitAutoEncoder` inherits all the methods of `pl.LightningModule` object.
+    This class object contains all the required methods
+    """
 
-We use the  `__init__` method to create the model. We describe the components of the `__init__` method first.
-
-Firstly, the encoder component involves a Linear layer with input size 28 x 28 and output size 64. Then, we apply a ReLU activation function and pass it to another linear layer with input size 64 and output size 3. The code for the encoder is the following:
-
-```python
-self.encoder = nn.Sequential(
-                nn.Linear(28 * 28, 64),
-                nn.ReLU(),
-                nn.Linear(64, 3))
-```
-
-The decoder component involves the a Linear layer with input size 3  and output size 64. Then, we apply a ReLU activation function and pass it to another linear layer with input size 64 and output size 28 x 28. The code for the encoder is the following:
-
-```python
-self.decoder = nn.Sequential(
-                nn.Linear(3, 64),
-                nn.ReLU(),
-                nn.Linear(64, 28 * 28))
-```
-
-The full `__init__` method  looks like below.
-
-```python
-def __init__(self):
-    super().__init__()
-    self.encoder = nn.Sequential(
-                nn.Linear(28 * 28, 64),
-                nn.ReLU(),
-                nn.Linear(64, 3))
-    self.decoder = nn.Sequential(
-                nn.Linear(3, 64),
-                nn.ReLU(),
-                nn.Linear(64, 28 * 28))
-```
-
-
-Apart from the  `__init__` method, the we have the following methods in `LitAutoEncoder` class, which we will describe below:
-
-    - `forward` method,
-    - `training_step` method,
-    - `validation_step` method,
-    - `configure_optimizers` method.
-
-Collecting all the above methods under the class `LitAutoEncoder` we finally have 
-
-```python
-class LitAutoEncoder(pl.LightningModule):
-    # Simple Autoencoder 
+    # Simple Autoencoder
     def __init__(self):
         super().__init__()
         self.encoder = nn.Sequential(
-                    nn.Linear(28 * 28, 64),
-                    nn.ReLU(),
-                    nn.Linear(64, 3))
+            nn.Linear(28 * 28, 64),
+            nn.ReLU(),
+            nn.Linear(64, 3))
         self.decoder = nn.Sequential(
-                    nn.Linear(3, 64),
-                    nn.ReLU(),
-                    nn.Linear(64, 28 * 28))
+            nn.Linear(3, 64),
+            nn.ReLU(),
+            nn.Linear(64, 28 * 28))
 
     # Forward pass of the encoder
     def forward(self, x):
         embedding = self.encoder(x)
         return embedding
 
-    # Optimizer init  
+    # Optimizer init
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
 
-    # Training step 
+    # Training step
     def training_step(self, train_batch, batch_idx):
         x, y = train_batch
-        x = x.view(x.size(0), -1) 
+        x = x.view(x.size(0), -1)
         z = self.encoder(x)
         x_hat = self.decoder(z)
         loss = F.mse_loss(x_hat, x)
-        self.log('train_loss', loss, on_step=True, on_epoch=True, sync_dist=True)
+        self.log('train_loss', loss, on_step=True,
+                 on_epoch=True, sync_dist=True)
         return loss
 
     # Validation step
@@ -186,63 +138,96 @@ class LitAutoEncoder(pl.LightningModule):
         x_hat = self.decoder(z)
         loss = F.mse_loss(x_hat, x)
         self.log('val_loss', loss, on_step=True, on_epoch=True, sync_dist=True)
-```
 
-Now that our model is setup, we need to consider the other part of training the deep learning model which is handled by the `main()` function given below:
 
-```python
 def main():
     """
     Main function that handles all the dataset pre-processing, 
     instantiating the model  and training that model.
     """
     # download and pre-process the MNIST dataset
-    dataset = MNIST('data', train=True, download=True, \
-      transform=transforms.ToTensor())
+    dataset = MNIST('data', train=True, download=True,
+                    transform=transforms.ToTensor())
     mnist_train, mnist_val = random_split(dataset, [55000, 5000])
 
-    # Instantiate the dataloader on training dataset 
-    # and the validation dataset with appropriate batch_size
-    train_loader = DataLoader(mnist_train, batch_size=32, pin_memory=True)
-    val_loader = DataLoader(mnist_val, batch_size=32,
-                pin_memory=True)
-
-    # Instantiate model instance 
-    model = LitAutoEncoder()
-
-    # check if cuda is available 
+    # check if cuda is available
     # and get number of gpus into the variable num_gpus
     if torch.cuda.is_available():
-      num_gpus = torch.cuda.device_count()
+        num_gpus = torch.cuda.device_count()
     else:
-      num_gpus = 0
+        num_gpus = 0
 
     # choose accelerator based on the number of gpus
     if num_gpus == 0:
-      accelerator_name = 'cpu'
-    elif num_gpus == 1:
-      accelerator_name = 'gpu'
-    elif num_gpus > 1:
-      accelerator_name = 'dp' # data parallel setting
+        accelerator_name = 'cpu'
     else:
-      raise 
+        accelerator_name = 'gpu'
 
+    if num_gpus == 0:
+        # setting number of processes for cpu
+        num_devices = 2
+        batch_size = 32
+    else:
+        # setting number of devices to be exactly the number of gpus
+        num_devices = num_gpus
+        # changing batch size accordingly
+        batch_size = int(32*num_gpus)
+
+    # Instantiate the dataloader on training dataset
+    # and the validation dataset with appropriate batch_size
+    train_loader = DataLoader(
+                            mnist_train,
+                            batch_size=batch_size,
+                            num_workers=8,
+                            pin_memory=True)
+    val_loader = DataLoader(mnist_val,
+                            batch_size=batch_size,
+                            num_workers=8,
+                            pin_memory=True)
+
+    # Instantiate model instance
+    model = LitAutoEncoder()
 
     # trainer instance with appropriate settings
-    trainer = pl.Trainer(gpus=num_gpus, accelerator=accelerator_name,
-                limit_train_batches=0.5, max_epochs=1)
+    trainer = pl.Trainer(accelerator=accelerator_name,
+                         limit_train_batches=0.5, max_epochs=10,
+                         logger=wandb_logger,
+                         devices=num_devices, strategy="ddp")
 
-    # fit with trainer 
+    # fit with trainer
     print('starting to fit')
     trainer.fit(model, train_loader, val_loader)
+
+
+if __name__ == '__main__':
+    # wandb login
+    wandb.login(key='efd2c2663c2c06466197879239f29686dec4fbad')
+
+    # wandb log results to a project 
+    wandb_logger = WandbLogger(project="my-test-project")
+
+    # running the deep learning model now
+    main()
 ```
+The `LitAutoEncoder` object contains our  Autoencoder model. The `main` function handles the `DataLoader` parts for our training and validation datasets, and also the  `pl.Trainer` object. 
 
-The contents of the main function are mostly self explanatory and training process is very similar to training a deep learning in pure Pytorch. However, we will briefly explain the working of the `main` function. Initially, we load the MNIST dataset via `MNIST` object which we imported earlier. The parameter value `data` essentially created a folder with name `data`.  Other parameters are standard in Pytorch. Next, we split the MNIST dataset of 60000 images into two sets, `mnist_train` with 55000 images and `mnist_val` with 5000 images. Later, we use the standard `DataLoader` object to efficiently pass the images as batches for training the deep learning model. We instantiate the `DataLoader` for the training set `mnist_train` and the validation set `mnist_val`. Then, we instantiate our model in `model` object via previously created `LitAutoEncoder` object. 
+With Pytorch Lightning, we use the `pl.Trainer` object to specify the training type. In particular, depending of the number of GPUs on the device (can be checked via `torch.cuda.is_available()`) we have to set the arguments `gpus`, `accelerator` appropriately. For CPU, we need to set `accelerator = 'cpu'` and for the rest of cases, we set `accelerator = 'gpu'`. 
 
-With Pytorch Lightning, we use the `pl.Trainer` object to specify the training type. In particular, depending of the number of GPUs on the device (can be checked via `torch.cuda.is_available()`) we have to set the arguments `gpus`, `accelerator` appropriately. For CPU, we need to set `accelerator = 'cpu'` and for the rest of cases, we set `accelerator = 'gpu'`. [TODO]
+We set the `strategy` of `pl.Trainer` object to `ddp` and `logger=wandb_logger` for  logging our results to wandb. There exist several other strategies for distributed training in Pytorch Lightning, regarding which the information can be found [here](https://pytorch-lightning.readthedocs.io/en/1.5.0/advanced/multi_gpu.html). [TODO: Change documentation link.] The authors of Pytorch Lightning recommend `ddp` strategy, as it is faster than the usual `dp` strategy. 
+
+The `batch_size` parameter of the dataloaders can be tuned according to the number of devices under consideration.
 
 Finally, in order to fit the model instance with the training data and obtain results also on the validation data, we have the call the `fit` method of `trainer` object as following:
 `trainer.fit(model, train_loader, val_loader)`
+
+For tracking the results, we used `wandb` for which we can login using the following (Please change the key accordingly):
+
+`wandb.login(key='efd2c2663c2c06466197879239f29686dec4fbad')`
+
+In order to keep the logged results under a wandb project, we use 
+
+`wandb_logger = WandbLogger(project="my-test-project")`
+
 
 # Our Dstack Workflow
 
@@ -252,18 +237,18 @@ Dstack automates this entire process via a specification of the requirements in 
 
 Firstly, create a account at `dstack.ai` and configure the settings appropriately according to the CPU/GPU requirements. In our case, it looks like the following:
  ![AWS settings](/blog_figures/fig_1.png)
+Since multiple GPUs  are required for our workflow, we may need to add `p3.8xlarge` GPU instance of AWS in the dstack settings. In order to do this, click on the settings tab on the left side of the [dstack.ai](https://dstack.ai) interface. In the settings frame, there is AWS tab, where we can see a button `Add a limit`. On clicking that button, you can select the  `p3.8xlarge` GPU instance of AWS.
 
-
-We consider the workflow, where we train our deep learning model on multiple GPUs. This workflow needs to be be added in `.dstack/workflows.yaml` file. The contents of this file should be akin to the following:
+This workflow needs to be be added in `.dstack/workflows.yaml` file. The contents of this file should be akin to the following:
 
 ```yaml
 workflows:
   - name: WORKFLOW_1
-  - name: WORKFLOW_2
-  - name: WORKFLOW_3
 ```
 
-Dstack extracts the requirements to run the deep learning model from `requirements.txt`, which we pass it as a value to requirements property in the workflow. Since, we require four GPUs, we specify that under `resources` key. 
+
+
+Dstack extracts the requirements to run the deep learning model from `requirements.txt`, which we pass it as a value to requirements property in the workflow. We consider the workflow, where we train our deep learning model on multiple GPUs. We require four GPUs, we specify that under `resources` key.
 
 The contents of the `.dstack/workflows.yaml` file  looks like below.
 
@@ -271,8 +256,9 @@ The contents of the `.dstack/workflows.yaml` file  looks like below.
 workflows:
   - name: train-mnist-multi-gpu
     provider: python
+    version: 3.9
     requirements: requirements.txt
-    python_script: train.py
+    script: train.py
     artifacts:
       - data
     resources:
@@ -287,26 +273,36 @@ variables:
     gpu: 4
 ```
 
-
 In order to run the workflow all we have to do is to execute the following command in the terminal
 
 ```bash
 dstack run train-mnist-multi-gpu
 ```
 
-
 Now, open [dstack.ai](https://dstack.ai) to see the workflows (after you perform the login). You will see contents of the `Runs` tab like below.
 
-![Workflows](/blog_figures/fig_2.png)
+![Workflows](/blog_figures/fig_3.png)
 
 You can check each workflow by clicking on the respective button. In the `Logs` tab, you will see the cloud server running the `train.py` after few minutes of starting the job. 
 
-In the `Runners` tab on the left side, you will find information of the specific instances being used.
+In the `Runners` tab on the left side, you will find information on the specific instances being used.
 
-For the workflow `train-mnist-multi-gpu`, since multiple GPUs are required you may need to add `p3.8xlarge` GPU instance of AWS in the dstack settings. In order to do this, click on the settings tab on the left side of the [dstack.ai](https://dstack.ai) interface. In the settings frame, there is AWS tab, where we can see a button `Add a limit`. On clicking that button, you can select the  `p3.8xlarge` GPU instance of AWS. In the end, you should see the following in the dstack website:
- ![AWS settings](/blog_figures/fig_1.png)
+ 
+In the `Logs` of the run under consideration, after a few moments, towards the end of the `Logs`, you will information like below.
+
+`2022-05-13 14:15 wandb: Synced prime-shape-23: https://wandb.ai/mmahesh/my-test-project/runs/1kwcoyo3`
+
+Go to that particular url to see the plots of the results, as shown below.
+![Wandb results 2](/blog_figures/fig_5.png)
+
+You will also find several other related information, like system information and many others, as shown below.
+
+![Wandb results 1](/blog_figures/fig_4.png)
+
+
 
 # References
 
-- [Dstack documentation](https://docs.dstack.ai)
+- [Dstack](https://docs.dstack.ai)
 - [Pytorch Lightning](https://www.pytorchlightning.ai/)
+- [Wandb](https://wandb.ai/site)
