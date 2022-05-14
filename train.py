@@ -10,6 +10,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning import Trainer
 import wandb
+import os 
 
 
 class LitAutoEncoder(pl.LightningModule):
@@ -122,7 +123,8 @@ def main():
 
 if __name__ == '__main__':
     # wandb login 
-    wandb.login(key='efd2c2663c2c06466197879239f29686dec4fbad')
+    wandb_key = os.environ['WANDB_API_KEY']
+    wandb.login(key=wandb_key)
 
     # wandb log results to a project
     wandb_logger = WandbLogger(project="my-test-project")
