@@ -6,5 +6,6 @@ workflows:
     script: train.py
     artifacts:
       - data
+      - model
     resources:
-      gpu: ${{ gpu }}
+      gpu: 4

@@ -1,3 +1,0 @@
-variables:
-  train-mnist-multi-gpu:
-    gpu: 4

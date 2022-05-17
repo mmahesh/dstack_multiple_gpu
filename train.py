@@ -111,17 +111,24 @@ def main():
 
     # trainer instance with appropriate settings
     trainer = pl.Trainer(accelerator=accelerator_name,
-                         limit_train_batches=0.5, max_epochs=10, logger=wandb_logger,
-                         devices=num_devices, strategy="ddp")
+                         limit_train_batches=0.5, 
+                         max_epochs=10, 
+                         logger=wandb_logger,
+                         devices=num_devices, 
+                         strategy="ddp")
 
     # fit with trainer
     print('starting to fit')
     trainer.fit(model, train_loader, val_loader)
 
+    # saving the model 
+    trainer.save_checkpoint("model/example.ckpt")
+
+
 
 if __name__ == '__main__':
     # wandb login 
-    wandb.login(key=os.environ['WANDB_API_KEY'])
+    # wandb.login(key=os.environ['WANDB_API_KEY'])
 
     # wandb log results to a project
     wandb_logger = WandbLogger(project="my-test-project")
