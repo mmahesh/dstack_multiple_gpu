@@ -6,7 +6,7 @@ The `train.py` contains all the machine learning components.
 
 In order to automate the workflow, I use `dstack`.
 
-In order to run the workflow, all you need to do is 
+In order to run the workflow, all you need to do is execute the following command in your terminal:
 
 ```bash
 dstack run train-mnist-multi-gpu
