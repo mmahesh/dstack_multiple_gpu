@@ -8,10 +8,8 @@ from torchvision.datasets import MNIST
 from torchvision import transforms
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning import Trainer
 import wandb
 import os 
-
 
 class LitAutoEncoder(pl.LightningModule):
     """
@@ -123,8 +121,7 @@ def main():
 
 if __name__ == '__main__':
     # wandb login 
-    wandb_key = os.environ['WANDB_API_KEY']
-    wandb.login(key=wandb_key)
+    wandb.login(key=os.environ['WANDB_API_KEY'])
 
     # wandb log results to a project
     wandb_logger = WandbLogger(project="my-test-project")

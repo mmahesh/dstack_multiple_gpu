@@ -1,3 +1,4 @@
+dstack
 torch
 torchvision
 pytorch-lightning
